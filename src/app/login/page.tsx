@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
-
+import { signIn } from "next-auth/react";
 import { Github, Chrome } from "lucide-react";
 
 export default function LoginPage() {
@@ -61,7 +61,7 @@ export default function LoginPage() {
               <Button
                 variant="outline"
                 className="w-full flex items-center gap-2"
-                onClick={() => signIn("google")}
+                onClick={() => signIn("google", { callbackUrl: "/" })} // Redirect to home after login
               >
                 <Chrome className="w-5 h-5" />
                 Login with Google
@@ -69,7 +69,7 @@ export default function LoginPage() {
               <Button
                 variant="outline"
                 className="w-full flex items-center gap-2"
-                onClick={() => signIn("github")}
+                onClick={() => signIn("github", { callbackUrl: "/" })} // Redirect to home after login
               >
                 <Github className="w-5 h-5" />
                 Login with GitHub
