@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { Github, Chrome } from "lucide-react";
+import { signIn } from "next-auth/react";
 
 export default function SignupPage() {
   const [loading, setLoading] = useState(false);

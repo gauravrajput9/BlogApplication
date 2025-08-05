@@ -1,40 +1,55 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
-// Example dummy blogs (replace with API data)
-const blogs = [
-  {
-    id: 1,
-    title: "First Blog Post",
-    excerpt: "This is a short preview of the first blog...",
-    date: "2025-08-04",
-  },
-  {
-    id: 2,
-    title: "Next.js 15 + Tiptap Setup",
-    excerpt: "Learn how to integrate Tiptap editor in Next.js...",
-    date: "2025-08-02",
-  },
-  {
-    id: 3,
-    title: "Dark Mode UI for Blogs",
-    excerpt: "Implementing clean dark mode UI using Tailwind CSS...",
-    date: "2025-07-29",
-  },
-];
+// Fetch blogs from API
+const fetchBlogs = async () => {
+  const res = await fetch("/api/blog");
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data.errors || "Failed to fetch blogs");
+  }
+  return data.blogs;
+};
 
 export default function BlogsPage() {
+  const router = useRouter();
+  const [blogs, setBlogs] = useState<any[]>([]);
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Filter blogs based on search
+  // Load blogs on mount
+  useEffect(() => {
+    const getBlogs = async () => {
+      try {
+        const blogsData = await fetchBlogs();
+        setBlogs(blogsData);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    getBlogs();
+  }, []);
+
   const filteredBlogs = blogs.filter((blog) =>
     blog.title.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-950 py-10 px-4">
+      <button
+        onClick={() => router.push("/blog/create")}
+        className="mb-4 px-4 py-2 bg-blue-600 text-white rounded-lg"
+      >
+        Create New Blog
+      </button>
+
       <h1 className="text-3xl font-bold text-center mb-8 text-gray-900 dark:text-gray-100">
         All Blogs
       </h1>
@@ -50,29 +65,38 @@ export default function BlogsPage() {
         />
       </div>
 
+      {/* Loading/Error states */}
+      {loading && <p className="text-center text-gray-500">Loading blogs...</p>}
+      {error && <p className="text-center text-red-500">{error}</p>}
+
       {/* Blog list */}
       <div className="max-w-4xl mx-auto grid gap-6">
-        {filteredBlogs.length > 0 ? (
-          filteredBlogs.map((blog) => (
-            <Link
-              href={`/blog/${blog.id}`}
-              key={blog.id}
-              className="block p-6 bg-white dark:bg-gray-900 rounded-xl shadow hover:shadow-lg transition"
-            >
-              <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-                {blog.title}
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400 mt-2">
-                {blog.excerpt}
-              </p>
-              <span className="text-sm text-gray-500 dark:text-gray-500 block mt-2">
-                {new Date(blog.date).toLocaleDateString()}
-              </span>
-            </Link>
-          ))
-        ) : (
-          <p className="text-center text-gray-500">No blogs found.</p>
-        )}
+        {!loading && !error && filteredBlogs.length > 0
+          ? filteredBlogs.map((blog) => (
+              <Link
+                href={`/blog/${blog._id}`} // use _id from MongoDB
+                key={blog._id}
+                className="block p-6 bg-white dark:bg-gray-900 rounded-xl shadow hover:shadow-lg transition"
+              >
+                <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+                  {blog.title}
+                </h2>
+                <p className="text-gray-600 dark:text-gray-400 mt-2">
+                  {blog.content}
+                </p>
+                <span className="text-sm text-gray-500 dark:text-gray-500 block mt-2">
+                  {new Date(
+                    parseInt(blog._id.toString().substring(0, 8), 16) * 1000
+                  ).toLocaleDateString()}
+                </span>
+                <button onClick={() =>{
+                  router.push(`/blog/${blog._id}`)
+                }} >View Blog</button>
+              </Link>
+            ))
+          : !loading && (
+              <p className="text-center text-gray-500">No blogs found.</p>
+            )}
       </div>
     </div>
   );
